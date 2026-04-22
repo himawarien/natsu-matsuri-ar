@@ -41,97 +41,41 @@
 
 <body>
     <div class="ui-overlay">
-        <button id="snap-button" onclick="takeSnapshot()">📷 写真を撮る</button>
-        <div id="loading">保存中...</div>
+        <button id="clean-button" onclick="cleanUI()">✨ 画面をきれいにする</button>
+        <p id="guide-msg" style="color: white; display: none; background: rgba(0,0,0,0.5); padding: 5px;">
+            今のうちにスクリーンショットを撮ってね！
+        </p>
     </div>
 
-   <a-scene 
-  embedded 
-  arjs="sourceType: webcam; debugUIEnabled: false;"
-  screenshot="width: 1080; height: 1920;">
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
         <a-assets>
             <img id="mofu-frame" src="mohu.png">
         </a-assets>
-
         <a-camera>
-           <a-image 
-  src="#mofu-frame" 
-  position="0 0 -9" 
-  width="4" 
-  height="7.11">
-</a-image>
+            <a-image 
+                src="#mofu-frame" 
+                position="0 0 -7" 
+                width="4" 
+                height="7.11">
+            </a-image>
         </a-camera>
     </a-scene>
 
     <script>
-        // --- Cloudinary 設定エリア ---
-      const CLOUD_NAME = 'dr6x0dma6';
-        const UPLOAD_PRESET = 'matsuri'; // ここがスクリーンショットの名前と一致していればOK
+        function cleanUI() {
+            const btn = document.getElementById('clean-button');
+            const msg = document.getElementById('guide-msg');
+            
+            // ボタンを隠す
+            btn.style.visibility = 'hidden';
+            msg.style.display = 'block';
 
-  function takeSnapshot() {
-    const btn = document.getElementById('snap-button');
-    const loading = document.getElementById('loading');
-    
-    btn.disabled = true;
-    loading.style.display = 'block';
-
-    const video = document.querySelector('video');
-    const sceneCanvas = document.querySelector('canvas.a-canvas');
-    
-    // 1. 合成用のキャンバスを「スマホの画面サイズ（表示サイズ）」で作る
-    const canvas = document.createElement('canvas');
-    canvas.width = video.clientWidth;
-    canvas.height = video.clientHeight;
-    const ctx = canvas.getContext('2d');
-
-    // 2. ビデオ映像を「画面で見えている通り」に切り取って描画
-    // これで、上下に黒い帯が入ったり、潰れたりするのを防ぎます
-    const vW = video.videoWidth;
-    const vH = video.videoHeight;
-    const vRatio = vW / vH;
-    const cRatio = canvas.width / canvas.height;
-
-    let sx, sy, sw, sh;
-    if (vRatio > cRatio) {
-        sw = vH * cRatio;
-        sh = vH;
-        sx = (vW - sw) / 2;
-        sy = 0;
-    } else {
-        sw = vW;
-        sh = vW / cRatio;
-        sx = 0;
-        sy = (vH - sh) / 2;
-    }
-
-    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-
-    // 3. イラストを「画面の表示サイズ」のまま上書き
-    // これで、真ん中に寄ることなく、四隅までピッタリ重なります
-    ctx.drawImage(sceneCanvas, 0, 0, canvas.width, canvas.height);
-
-    const dataURL = canvas.toDataURL('image/jpeg', 0.9);
-
-    const formData = new FormData();
-    formData.append('file', dataURL);
-    formData.append('upload_preset', UPLOAD_PRESET);
-
-    fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: 'POST', body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.secure_url) {
-            alert("ついに『画面そのまま』で完成しました！\n長押しして保存してね！");
-            window.location.href = data.secure_url;
+            // 5秒後にボタンを戻す
+            setTimeout(() => {
+                btn.style.visibility = 'visible';
+                msg.style.display = 'none';
+            }, 5000);
         }
-    })
-    .catch(err => alert("通信エラーです"))
-    .finally(() => {
-        btn.disabled = false;
-        loading.style.display = 'none';
-    });
-}
     </script>
 </body>
 </html>
