@@ -72,20 +72,25 @@
     btn.disabled = true;
     loading.style.display = 'block';
 
-    // 1. スマホで見ている「ビデオ」そのもののサイズを取得
+    const scene = document.querySelector('a-scene');
     const video = document.querySelector('video');
+
+    // 1. A-Frameからイラストのキャンバスを取得
+    // preserveDrawingBuffer: true の代わりになる、一番安全な取得方法です
+    const frameCanvas = scene.components.screenshot.getCanvas('perspective');
+
+    // 2. 合成用のキャンバスを「ビデオの見た目」に合わせる
     const canvas = document.createElement('canvas');
-    canvas.width = video.clientWidth;
-    canvas.height = video.clientHeight;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
 
-    // 2. ビデオの映像（背景）を「見たままのサイズ」で描く
+    // 3. 背景（ビデオ）を描く
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // 3. イラスト（A-Frame）を、ビデオと全く同じサイズで上書きする
-    // WebGL（A-Frame）のキャンバスを直接取得します
-    const sceneCanvas = document.querySelector('canvas.a-canvas');
-    ctx.drawImage(sceneCanvas, 0, 0, canvas.width, canvas.height);
+    // 4. イラストを「画面全体」に広げて重ねる
+    // 真ん中に寄らないよう、0, 0 からキャンバスの端まで引き伸ばします
+    ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
@@ -101,7 +106,7 @@
     .then(res => res.json())
     .then(data => {
         if (data.secure_url) {
-            alert("ついに、ついに完成です！長押しして保存してね！");
+            alert("ついに完成です！長押しして保存してね！");
             window.location.href = data.secure_url;
         } else {
             alert('Cloudinaryの設定を確認してください');
