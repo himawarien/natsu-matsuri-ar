@@ -17,11 +17,12 @@
       button {
         padding: 15px 30px;
         font-size: 18px;
-        background: #ffcc00;
+        background: #ffcc00; /* ひまわり色 */
         color: #553300;
         border: 4px solid #ffffff;
         border-radius: 50px;
         font-weight: bold;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       }
     </style>
   </head>
@@ -31,25 +32,30 @@
       <button onclick="takeSnapshot()">📷 写真を撮る</button>
     </div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+    <a-scene 
+      embedded 
+      arjs="sourceType: webcam; debugUIEnabled: false; displayWidth: 1280; displayHeight: 720;">
+      
       <a-assets>
-        <img id="mofu-image" src="mohu.png">
+        <img id="mofu-frame" src="mohu.png">
       </a-assets>
 
-    <a-camera>
-  <a-image 
-    src="#mofu-image" 
-    position="-0.05 -0.5 -11" 
-    width="4" 
-    height="7.11">
-  </a-image>
-</a-camera>
+      <a-camera>
+        <a-image 
+          src="#mofu-frame" 
+          position="0 -0.8 -10" 
+          width="4" 
+          height="7.11">
+        </a-image>
+      </a-camera>
     </a-scene>
 
     <script>
       function takeSnapshot() {
-        alert("今度はどうでしょうか？\n全体が見えたら教えてくださいね！");
+        // Cloudinaryの設定ができたら、ここに保存処理を書きます
+        alert("今度はどうでしょうか？\nもしキャラクターが黄色いボタンと重なっていたら、\nposition の2番目の数字（-0.8）をもっと小さく（-1.0など）してみてください。");
       }
     </script>
   </body>
+</html>
 </html>
