@@ -72,27 +72,25 @@
             btn.disabled = true;
             loading.style.display = 'block';
 
-            // 1. ARシーン（イラスト）を取得
             const scene = document.querySelector('a-scene');
+            const video = document.querySelector('video');
             const frameCanvas = scene.components.screenshot.getCanvas('perspective');
             
-            // 2. カメラ映像（背景）を取得
-            const video = document.querySelector('video');
-            
-            // 3. 2つを合成するための「作業用キャンバス」を作成
+            // 1. 合成用のキャンバスを作成（ビデオの「縦長」に合わせる）
             const canvas = document.createElement('canvas');
-            canvas.width = frameCanvas.width;
-            canvas.height = frameCanvas.height;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
             const ctx = canvas.getContext('2d');
 
-            // 背景（ビデオ）を描く
+            // 2. ビデオ映像をそのまま描く
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            // その上にイラスト（フレーム）を重ねる
+
+            // 3. その上にイラスト（フレーム）を「スマホの比率」で重ねる
+            // イラストをビデオのサイズに合わせて綺麗に引き伸ばして重ねます
             ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
-            const dataURL = canvas.toDataURL('image/jpeg');
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8); // 画質も少し調整
 
-            // --- ここから下はCloudinaryへのアップロード（変更なし） ---
             const formData = new FormData();
             formData.append('file', dataURL);
             formData.append('upload_preset', UPLOAD_PRESET);
@@ -104,10 +102,10 @@
             .then(res => res.json())
             .then(data => {
                 if (data.secure_url) {
-                    alert("撮影成功！OKを押すと画像が開くので、長押しして保存してね！");
+                    alert("完成！写真を長押しして保存してね！");
                     window.location.href = data.secure_url;
                 } else {
-                    alert('保存に失敗しました。');
+                    alert('保存エラーが発生しました。');
                 }
             })
             .catch(err => {
