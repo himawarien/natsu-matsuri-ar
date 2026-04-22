@@ -65,7 +65,7 @@
       const CLOUD_NAME = 'dr6x0dma6';
         const UPLOAD_PRESET = 'matsuri'; // ここがスクリーンショットの名前と一致していればOK
 
-       function takeSnapshot() {
+      function takeSnapshot() {
             const btn = document.getElementById('snap-button');
             const loading = document.getElementById('loading');
             
@@ -76,21 +76,37 @@
             const video = document.querySelector('video');
             const frameCanvas = scene.components.screenshot.getCanvas('perspective');
             
-            // 1. 合成用のキャンバスを作成（ビデオの「縦長」に合わせる）
+            // 1. スマホ画面の比率（縦長）に合わせてキャンバスを作成
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
+            // スマホ画面で見ている通りの「縦長」の比率を計算
+            const screenRatio = window.innerWidth / window.innerHeight;
             canvas.height = video.videoHeight;
+            canvas.width = video.videoHeight * screenRatio;
             const ctx = canvas.getContext('2d');
 
-            // 2. ビデオ映像をそのまま描く
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // 2. ビデオ映像を「中央で切り取って」縦長にして描く
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+            const videoRatio = videoWidth / videoHeight;
+            
+            let sourceX, sourceY, sourceWidth, sourceHeight;
+            
+            // ビデオの方が横長なので、左右をカットして縦長にする
+            sourceWidth = videoHeight * screenRatio;
+            sourceHeight = videoHeight;
+            sourceX = (videoWidth - sourceWidth) / 2;
+            sourceY = 0;
 
-            // 3. その上にイラスト（フレーム）を「スマホの比率」で重ねる
-            // イラストをビデオのサイズに合わせて綺麗に引き伸ばして重ねます
+            // 切り取ったビデオを描画
+            ctx.drawImage(video, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+
+            // 3. イラスト（フレーム）を、比率を保ったまま画面いっぱいに重ねる
             ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
-            const dataURL = canvas.toDataURL('image/jpeg', 0.8); // 画質も少し調整
+            // 画質を少し上げて保存
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
+            // --- ここから下はアップロード（変更なし） ---
             const formData = new FormData();
             formData.append('file', dataURL);
             formData.append('upload_preset', UPLOAD_PRESET);
@@ -105,7 +121,7 @@
                     alert("完成！写真を長押しして保存してね！");
                     window.location.href = data.secure_url;
                 } else {
-                    alert('保存エラーが発生しました。');
+                    alert('保存に失敗しました。');
                 }
             })
             .catch(err => {
