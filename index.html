@@ -45,7 +45,10 @@
         <div id="loading">保存中...</div>
     </div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+   <a-scene 
+  embedded 
+  arjs="sourceType: webcam; debugUIEnabled: false;"
+  screenshot="width: 1080; height: 1920;">
         <a-assets>
             <img id="mofu-frame" src="mohu.png">
         </a-assets>
@@ -75,26 +78,32 @@
     const scene = document.querySelector('a-scene');
     const video = document.querySelector('video');
 
-    // 1. A-Frameからイラストのキャンバスを取得
-    // preserveDrawingBuffer: true の代わりになる、一番安全な取得方法です
+    // イラスト（A-Frame）のキャンバスを取得
+    // 確実に描画内容を保持したままキャプチャします
     const frameCanvas = scene.components.screenshot.getCanvas('perspective');
 
-    // 2. 合成用のキャンバスを「ビデオの見た目」に合わせる
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
+    // ビデオの見たままの比率でキャンバスを作成
+    const screenRatio = window.innerWidth / window.innerHeight;
     canvas.height = video.videoHeight;
+    canvas.width = video.videoHeight * screenRatio;
+    
     const ctx = canvas.getContext('2d');
 
-    // 3. 背景（ビデオ）を描く
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // 1. 背景を描画（ビデオを中央切り抜き）
+    const vW = video.videoWidth;
+    const vH = video.videoHeight;
+    const sW = vH * screenRatio;
+    const sX = (vW - sW) / 2;
+    ctx.drawImage(video, sX, 0, sW, vH, 0, 0, canvas.width, canvas.height);
 
-    // 4. イラストを「画面全体」に広げて重ねる
-    // 真ん中に寄らないよう、0, 0 からキャンバスの端まで引き伸ばします
+    // 2. イラストを重ねる
+    // 消えないように、取得したframeCanvasをそのまま全画面に描画
     ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
-    // --- Cloudinaryへのアップロード ---
+    // --- Cloudinaryへの送信 ---
     const formData = new FormData();
     formData.append('file', dataURL);
     formData.append('upload_preset', UPLOAD_PRESET);
@@ -106,15 +115,11 @@
     .then(res => res.json())
     .then(data => {
         if (data.secure_url) {
-            alert("ついに完成です！長押しして保存してね！");
+            alert("ついに完成しました！長押しして保存してね！");
             window.location.href = data.secure_url;
-        } else {
-            alert('Cloudinaryの設定を確認してください');
         }
     })
-    .catch(err => {
-        alert('通信エラーです');
-    })
+    .catch(err => alert("通信エラーです"))
     .finally(() => {
         btn.disabled = false;
         loading.style.display = 'none';
