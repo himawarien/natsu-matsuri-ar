@@ -65,66 +65,56 @@
       const CLOUD_NAME = 'dr6x0dma6';
         const UPLOAD_PRESET = 'matsuri'; // ここがスクリーンショットの名前と一致していればOK
 
-     function takeSnapshot() {
-            const btn = document.getElementById('snap-button');
-            const loading = document.getElementById('loading');
-            
-            btn.disabled = true;
-            loading.style.display = 'block';
+    function takeSnapshot() {
+    const btn = document.getElementById('snap-button');
+    const loading = document.getElementById('loading');
+    
+    btn.disabled = true;
+    loading.style.display = 'block';
 
-            const scene = document.querySelector('a-scene');
-            const video = document.querySelector('video');
-            
-            // 1. イラストを取得
-            const frameCanvas = scene.components.screenshot.getCanvas('perspective');
-            
-            // 2. キャンバスを「スマホの画面比率」で作成
-            const canvas = document.createElement('canvas');
-            const screenRatio = window.innerWidth / window.innerHeight;
-            
-            // ビデオの高さ基準で、幅を画面比率に合わせる
-            canvas.height = video.videoHeight;
-            canvas.width = video.videoHeight * screenRatio;
-            const ctx = canvas.getContext('2d');
+    // 1. スマホで見ている「ビデオ」そのもののサイズを取得
+    const video = document.querySelector('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
+    const ctx = canvas.getContext('2d');
 
-            // 3. ビデオを中央で切り取って背景にする
-            const vW = video.videoWidth;
-            const vH = video.videoHeight;
-            const sW = vH * screenRatio;
-            const sX = (vW - sW) / 2;
-            ctx.drawImage(video, sX, 0, sW, vH, 0, 0, canvas.width, canvas.height);
+    // 2. ビデオの映像（背景）を「見たままのサイズ」で描く
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // 4. 【ここが重要】イラストを無理やりキャンバスの端から端まで引き伸ばす
-            // これで「真ん中に寄る」のを防ぎ、Canvaで配置した通りの場所に来ます
-            ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+    // 3. イラスト（A-Frame）を、ビデオと全く同じサイズで上書きする
+    // WebGL（A-Frame）のキャンバスを直接取得します
+    const sceneCanvas = document.querySelector('canvas.a-canvas');
+    ctx.drawImage(sceneCanvas, 0, 0, canvas.width, canvas.height);
 
-            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+    const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
-            const formData = new FormData();
-            formData.append('file', dataURL);
-            formData.append('upload_preset', UPLOAD_PRESET);
+    // --- Cloudinaryへのアップロード ---
+    const formData = new FormData();
+    formData.append('file', dataURL);
+    formData.append('upload_preset', UPLOAD_PRESET);
 
-            fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.secure_url) {
-                    alert("ついに完成！長押しして保存してね！");
-                    window.location.href = data.secure_url;
-                } else {
-                    alert('保存に失敗しました。');
-                }
-            })
-            .catch(err => {
-                alert('通信エラーです。');
-            })
-            .finally(() => {
-                btn.disabled = false;
-                loading.style.display = 'none';
-            });
+    fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.secure_url) {
+            alert("ついに、ついに完成です！長押しして保存してね！");
+            window.location.href = data.secure_url;
+        } else {
+            alert('Cloudinaryの設定を確認してください');
         }
+    })
+    .catch(err => {
+        alert('通信エラーです');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        loading.style.display = 'none';
+    });
+}
     </script>
 </body>
 </html>
