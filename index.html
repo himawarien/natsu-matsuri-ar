@@ -41,10 +41,9 @@
 
 <body>
     <div class="ui-overlay">
-        <button id="clean-button" onclick="cleanUI()">✨ 画面をきれいにする</button>
-        <p id="guide-msg" style="color: white; display: none; background: rgba(0,0,0,0.5); padding: 5px;">
-            今のうちにスクリーンショットを撮ってね！
-        </p>
+        <button id="hide-btn" onclick="startPhotoSession()" style="padding: 15px 30px; font-size: 18px; background: #ffcc00; border-radius: 50px; font-weight: bold;">
+            ✨ 撮影モード（ボタンを隠す）
+        </button>
     </div>
 
     <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
@@ -62,18 +61,15 @@
     </a-scene>
 
     <script>
-        function cleanUI() {
-            const btn = document.getElementById('clean-button');
-            const msg = document.getElementById('guide-msg');
+        function startPhotoSession() {
+            const btn = document.getElementById('hide-btn');
             
-            // ボタンを隠す
-            btn.style.visibility = 'hidden';
-            msg.style.display = 'block';
+            // 1. ボタンを完全に消す
+            btn.style.display = 'none';
 
-            // 5秒後にボタンを戻す
+            // 2. 5秒後にボタンを復活させる（その間にスクショ！）
             setTimeout(() => {
-                btn.style.visibility = 'visible';
-                msg.style.display = 'none';
+                btn.style.display = 'block';
             }, 5000);
         }
     </script>
