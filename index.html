@@ -65,24 +65,38 @@
       const CLOUD_NAME = 'dr6x0dma6';
         const UPLOAD_PRESET = 'matsuri'; // ここがスクリーンショットの名前と一致していればOK
 
-        function takeSnapshot() {
+       function takeSnapshot() {
             const btn = document.getElementById('snap-button');
             const loading = document.getElementById('loading');
             
             btn.disabled = true;
             loading.style.display = 'block';
 
-            // ARシーンから画像を取得
+            // 1. ARシーン（イラスト）を取得
             const scene = document.querySelector('a-scene');
-            const canvas = scene.components.screenshot.getCanvas('perspective');
+            const frameCanvas = scene.components.screenshot.getCanvas('perspective');
+            
+            // 2. カメラ映像（背景）を取得
+            const video = document.querySelector('video');
+            
+            // 3. 2つを合成するための「作業用キャンバス」を作成
+            const canvas = document.createElement('canvas');
+            canvas.width = frameCanvas.width;
+            canvas.height = frameCanvas.height;
+            const ctx = canvas.getContext('2d');
+
+            // 背景（ビデオ）を描く
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // その上にイラスト（フレーム）を重ねる
+            ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+
             const dataURL = canvas.toDataURL('image/jpeg');
 
-            // フォームデータの作成
+            // --- ここから下はCloudinaryへのアップロード（変更なし） ---
             const formData = new FormData();
             formData.append('file', dataURL);
             formData.append('upload_preset', UPLOAD_PRESET);
 
-            // アップロード実行
             fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
                 method: 'POST',
                 body: formData
@@ -90,20 +104,13 @@
             .then(res => res.json())
             .then(data => {
                 if (data.secure_url) {
-                    // 成功：撮った写真のURLへジャンプ
-                    if (data.secure_url) {
-                    // 成功：画像を新しいタブで開く
-                    // スマホの場合は、開いた画像を「長押し」して「"写真"に保存」を選択してください！
-                    alert("撮影成功！OKを押すと画像が開くので、画像を長押しして保存してね！");
+                    alert("撮影成功！OKを押すと画像が開くので、長押しして保存してね！");
                     window.location.href = data.secure_url;
-                }
                 } else {
-                    console.error('Cloudinary Error:', data);
-                    alert('保存に失敗しました。Cloudinaryの設定を確認してください。');
+                    alert('保存に失敗しました。');
                 }
             })
             .catch(err => {
-                console.error('Fetch Error:', err);
                 alert('通信エラーが発生しました。');
             })
             .finally(() => {
