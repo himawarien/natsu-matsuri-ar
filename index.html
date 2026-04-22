@@ -78,27 +78,26 @@
     const scene = document.querySelector('a-scene');
     const video = document.querySelector('video');
 
-    // イラスト（A-Frame）のキャンバスを取得
-    // 確実に描画内容を保持したままキャプチャします
+    // 1. イラストを取得
     const frameCanvas = scene.components.screenshot.getCanvas('perspective');
 
+    // 2. 合成用キャンバスを「スマホで見ている縦長サイズ」で作成
     const canvas = document.createElement('canvas');
-    // ビデオの見たままの比率でキャンバスを作成
     const screenRatio = window.innerWidth / window.innerHeight;
     canvas.height = video.videoHeight;
     canvas.width = video.videoHeight * screenRatio;
-    
     const ctx = canvas.getContext('2d');
 
-    // 1. 背景を描画（ビデオを中央切り抜き）
+    // 3. 背景を描画（ビデオを中央で切り取って縦長にフィットさせる）
     const vW = video.videoWidth;
     const vH = video.videoHeight;
     const sW = vH * screenRatio;
     const sX = (vW - sW) / 2;
     ctx.drawImage(video, sX, 0, sW, vH, 0, 0, canvas.width, canvas.height);
 
-    // 2. イラストを重ねる
-    // 消えないように、取得したframeCanvasをそのまま全画面に描画
+    // 4. 【ここが解決策！】
+    // イラストを 0, 0 からキャンバスの端まで「強制的に拡大」して重ねます。
+    // これで、真ん中に寄っていたモフポンポンたちが四隅に広がります！
     ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL('image/jpeg', 0.9);
@@ -115,7 +114,7 @@
     .then(res => res.json())
     .then(data => {
         if (data.secure_url) {
-            alert("ついに完成しました！長押しして保存してね！");
+            alert("ついに、理想の写真が完成しました！\n長押しして保存してね！");
             window.location.href = data.secure_url;
         }
     })
