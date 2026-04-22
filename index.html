@@ -65,7 +65,7 @@
       const CLOUD_NAME = 'dr6x0dma6';
         const UPLOAD_PRESET = 'matsuri'; // ここがスクリーンショットの名前と一致していればOK
 
-      function takeSnapshot() {
+     function takeSnapshot() {
             const btn = document.getElementById('snap-button');
             const loading = document.getElementById('loading');
             
@@ -75,30 +75,31 @@
             const scene = document.querySelector('a-scene');
             const video = document.querySelector('video');
             
-            // 1. A-Frameのスクリーンショット機能を使って、イラスト「だけ」を今の画角で取得
-            // これでイラストが真ん中に寄るのを防ぎます
+            // 1. イラストを取得
             const frameCanvas = scene.components.screenshot.getCanvas('perspective');
             
-            // 2. 合成用のキャンバスをビデオ（カメラ）の縦長サイズに合わせて作成
+            // 2. キャンバスを「スマホの画面比率」で作成
             const canvas = document.createElement('canvas');
             const screenRatio = window.innerWidth / window.innerHeight;
+            
+            // ビデオの高さ基準で、幅を画面比率に合わせる
             canvas.height = video.videoHeight;
             canvas.width = video.videoHeight * screenRatio;
             const ctx = canvas.getContext('2d');
 
-            // 3. ビデオ映像を中央で切り取って描画（背景）
-            const videoWidth = video.videoWidth;
-            const videoHeight = video.videoHeight;
-            const sourceWidth = videoHeight * screenRatio;
-            const sourceX = (videoWidth - sourceWidth) / 2;
-            ctx.drawImage(video, sourceX, 0, sourceWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+            // 3. ビデオを中央で切り取って背景にする
+            const vW = video.videoWidth;
+            const vH = video.videoHeight;
+            const sW = vH * screenRatio;
+            const sX = (vW - sW) / 2;
+            ctx.drawImage(video, sX, 0, sW, vH, 0, 0, canvas.width, canvas.height);
 
-            // 4. イラストを重ねる（ここでサイズをキャンバスに100%合わせる）
+            // 4. 【ここが重要】イラストを無理やりキャンバスの端から端まで引き伸ばす
+            // これで「真ん中に寄る」のを防ぎ、Canvaで配置した通りの場所に来ます
             ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
             const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
-            // --- Cloudinaryへのアップロード ---
             const formData = new FormData();
             formData.append('file', dataURL);
             formData.append('upload_preset', UPLOAD_PRESET);
@@ -110,14 +111,14 @@
             .then(res => res.json())
             .then(data => {
                 if (data.secure_url) {
-                    alert("完璧です！写真を長押しして保存してね！");
+                    alert("ついに完成！長押しして保存してね！");
                     window.location.href = data.secure_url;
                 } else {
                     alert('保存に失敗しました。');
                 }
             })
             .catch(err => {
-                alert('通信エラーが発生しました。');
+                alert('通信エラーです。');
             })
             .finally(() => {
                 btn.disabled = false;
