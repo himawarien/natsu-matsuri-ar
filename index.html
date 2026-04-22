@@ -76,25 +76,39 @@
     loading.style.display = 'block';
 
     const video = document.querySelector('video');
-    const scene = document.querySelector('a-scene');
+    const sceneCanvas = document.querySelector('canvas.a-canvas');
     
-    // 1. A-Frameからイラストを取得
-    const frameCanvas = scene.components.screenshot.getCanvas('perspective');
-
-    // 2. キャンバスを「カメラの本来のサイズ」で作成
+    // 1. 合成用のキャンバスを「スマホの画面サイズ（表示サイズ）」で作る
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = video.clientWidth;
+    canvas.height = video.clientHeight;
     const ctx = canvas.getContext('2d');
 
-    // 3. 背景（ビデオ）をそのまま描く
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // 2. ビデオ映像を「画面で見えている通り」に切り取って描画
+    // これで、上下に黒い帯が入ったり、潰れたりするのを防ぎます
+    const vW = video.videoWidth;
+    const vH = video.videoHeight;
+    const vRatio = vW / vH;
+    const cRatio = canvas.width / canvas.height;
 
-    // 4. 【力技の解決策】
-    // 真ん中に寄ってしまうイラストを、
-    // 「ビデオの幅」に合わせて左右に無理やり引き伸ばして重ねます。
-    // これで、モフポンポンたちが画面の端（四隅）へ移動します。
-    ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+    let sx, sy, sw, sh;
+    if (vRatio > cRatio) {
+        sw = vH * cRatio;
+        sh = vH;
+        sx = (vW - sw) / 2;
+        sy = 0;
+    } else {
+        sw = vW;
+        sh = vW / cRatio;
+        sx = 0;
+        sy = (vH - sh) / 2;
+    }
+
+    ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
+    // 3. イラストを「画面の表示サイズ」のまま上書き
+    // これで、真ん中に寄ることなく、四隅までピッタリ重なります
+    ctx.drawImage(sceneCanvas, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
@@ -108,11 +122,11 @@
     .then(res => res.json())
     .then(data => {
         if (data.secure_url) {
-            alert("ついに、理想の配置で完成しました！\n長押しして保存してね！");
+            alert("ついに『画面そのまま』で完成しました！\n長押しして保存してね！");
             window.location.href = data.secure_url;
         }
     })
-    .catch(err => alert("通信エラー"))
+    .catch(err => alert("通信エラーです"))
     .finally(() => {
         btn.disabled = false;
         loading.style.display = 'none';
