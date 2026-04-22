@@ -78,29 +78,23 @@
     const video = document.querySelector('video');
     const scene = document.querySelector('a-scene');
     
-    // 1. A-Frameからイラストを取得（正方形っぽくなっているデータ）
+    // 1. A-Frameからイラストを取得
     const frameCanvas = scene.components.screenshot.getCanvas('perspective');
 
-    // 2. キャンバスを「ビデオの本来の比率」で作成
+    // 2. キャンバスを「カメラの本来のサイズ」で作成
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
 
-    // 3. 背景（ビデオ）を描画
+    // 3. 背景（ビデオ）をそのまま描く
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // 4. 【魔法の調整】
-    // 正方形になってしまっているイラストを、左右をカットして縦長にフィットさせる
-    const videoRatio = canvas.width / canvas.height;
-    const frameWidth = frameCanvas.width;
-    const frameHeight = frameCanvas.height;
-    
-    // イラストの「真ん中の縦長部分」だけを切り取って、ビデオ全体に広げる
-    const sWidth = frameHeight * videoRatio;
-    const sX = (frameWidth - sWidth) / 2;
-
-    ctx.drawImage(frameCanvas, sX, 0, sWidth, frameHeight, 0, 0, canvas.width, canvas.height);
+    // 4. 【力技の解決策】
+    // 真ん中に寄ってしまうイラストを、
+    // 「ビデオの幅」に合わせて左右に無理やり引き伸ばして重ねます。
+    // これで、モフポンポンたちが画面の端（四隅）へ移動します。
+    ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
@@ -114,7 +108,7 @@
     .then(res => res.json())
     .then(data => {
         if (data.secure_url) {
-            alert("成功です！これが本当の完成です！");
+            alert("ついに、理想の配置で完成しました！\n長押しして保存してね！");
             window.location.href = data.secure_url;
         }
     })
