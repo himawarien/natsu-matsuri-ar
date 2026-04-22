@@ -78,41 +78,47 @@
     const video = document.querySelector('video');
     const scene = document.querySelector('a-scene');
     
-    // 1. イラストを「画面に見えているまま」のサイズで取得
+    // 1. A-Frameからイラストを取得（正方形っぽくなっているデータ）
     const frameCanvas = scene.components.screenshot.getCanvas('perspective');
 
-    // 2. 合成用キャンバスを作成（スマホで見ているビデオのサイズに合わせる）
+    // 2. キャンバスを「ビデオの本来の比率」で作成
     const canvas = document.createElement('canvas');
-    canvas.width = video.clientWidth;
-    canvas.height = video.clientHeight;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
 
-    // 3. 背景を描画（ビデオをそのまま描く）
+    // 3. 背景（ビデオ）を描画
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // 4. イラストを重ねる
-    // これで「見たまま」の位置にモフポンポンたちが配置されます
-    ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+    // 4. 【魔法の調整】
+    // 正方形になってしまっているイラストを、左右をカットして縦長にフィットさせる
+    const videoRatio = canvas.width / canvas.height;
+    const frameWidth = frameCanvas.width;
+    const frameHeight = frameCanvas.height;
+    
+    // イラストの「真ん中の縦長部分」だけを切り取って、ビデオ全体に広げる
+    const sWidth = frameHeight * videoRatio;
+    const sX = (frameWidth - sWidth) / 2;
+
+    ctx.drawImage(frameCanvas, sX, 0, sWidth, frameHeight, 0, 0, canvas.width, canvas.height);
 
     const dataURL = canvas.toDataURL('image/jpeg', 0.9);
 
-    // --- Cloudinaryへの送信 ---
     const formData = new FormData();
     formData.append('file', dataURL);
     formData.append('upload_preset', UPLOAD_PRESET);
 
     fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
-        method: 'POST',
-        body: formData
+        method: 'POST', body: formData
     })
     .then(res => res.json())
     .then(data => {
         if (data.secure_url) {
-            alert("ついに完成！長押しして保存してね！");
+            alert("成功です！これが本当の完成です！");
             window.location.href = data.secure_url;
         }
     })
-    .catch(err => alert("通信エラーです"))
+    .catch(err => alert("通信エラー"))
     .finally(() => {
         btn.disabled = false;
         loading.style.display = 'none';
